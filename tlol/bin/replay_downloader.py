@@ -34,19 +34,19 @@ flags.DEFINE_string("champs", "", \
     """(Default: "", any champion)
     Comma-separated list of champions.
     Logical OR search term, so if any of them are present the game is returned.""")
-flags.DEFINE_string("target_patch", "11_23", "U.GG formatted target League patch")
+flags.DEFINE_string("target_patch", "14_8", "U.GG formatted target League patch")
 flags.DEFINE_integer("max_games", -1, \
     """(Default: Max returned games)
     Limits the number of replay files downloaded up to a maximum number of games.""")
 flags.DEFINE_integer("max_workers", 10, "Max workers per process")
 flags.DEFINE_float("delay", 0.5, "Request delay")
-flags.DEFINE_string("outfile", "", "(Optional) Save match ID list to a text file")
+flags.DEFINE_string("outfile", "testoutfile.txt", "(Optional) Save match ID list to a text file")
 flags.DEFINE_string("infile", "", "(Optional) Use a text file of match IDs")
-flags.DEFINE_string("regionId", "euw1", "(Optional) Specify which region to download replays from")
+flags.DEFINE_string("regionId", "na1", "(Optional) Specify which region to download replays from")
 
 flags.DEFINE_integer("start_page", 1, \
     "Sets the first leaderboard page which is scraped")
-flags.DEFINE_integer("last_page", None, \
+flags.DEFINE_integer("last_page", 2, \
     "Sets the last leaderboard page which is scraped")
 
 flags.mark_flag_as_required("last_page")
@@ -65,9 +65,10 @@ def main(unused_argv):
         regionId=FLAGS.regionId)
     
     # Extract summoner names
-    print('Summoner count:', len(summoners), summoners)
-    summoner_names = [s["summonerName"] if "summonerName" in s else ""
-                    for s in summoners]
+    #print('Summoner count:', len(summoners), summoners)
+    summoner_names = []
+    for s in summoners:
+        summoner_names.append((s["riotUserName"], s["riotTagLine"]))
 
     print("Summoner names:", summoner_names)
 
@@ -80,7 +81,7 @@ def main(unused_argv):
             outpath="", # set the outfile to write the match ids to a file
             win_only=False,
             max_workers=FLAGS.max_workers,
-            seasonIds=[20, 21],
+            seasonIds=[21, 22],
             delay=FLAGS.delay,
             regionId=FLAGS.regionId)
         matches = list(matches)

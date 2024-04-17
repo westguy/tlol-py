@@ -65,7 +65,8 @@ class U_GG_API(object):
         players = []
         req_body = lambda p: {
             "operationName": "getRankedLeaderboard",
-            "query": "query getRankedLeaderboard($page: Int, $queueType: Int, $regionId: String!) {\n  leaderboardPage(page: $page, queueType: $queueType, regionId: $regionId) {\n    totalPlayerCount\n    topPlayerMostPlayedChamp\n    players {\n      iconId\n      losses\n      lp\n      overallRanking\n      rank\n      summonerLevel\n      summonerName\n      tier\n      wins\n      __typename\n    }\n    __typename\n  }\n}\n",
+            "query": "query getRankedLeaderboard($page: Int, $queueType: Int, $regionId: String!) {\n  leaderboardPage(page: $page, queueType: $queueType, regionId: $regionId) {\n    totalPlayerCount\n    topPlayerMostPlayedChamp\n    players {\n      iconId\n      losses\n      lp\n      overallRanking\n      rank\n      summonerLevel\n      riotTagLine\n      riotUserName\n      tier\n      wins\n      __typename\n    }\n    __typename\n  }\n}\n",
+            
             "variables": {
                 "page": p,
                 "queueType": 420, # Ranked Solo/Duo
@@ -83,16 +84,15 @@ class U_GG_API(object):
             for future in concurrent.futures.as_completed(future_to_summoner_name):
                 try:
                     data = future.result()
-                    # print("DATA:", data, data.text)
+                    #print("DATA:", data, data.text)
                     data = json.loads(data.content)
-                    # print("DATA:", data)
                     data = data["data"]["leaderboardPage"]["players"]
+                    #print("DATA:", data)
                 except Exception as exc:
                     data = str(type(exc))
-                    # print("ERR:", data)
+                    #print("ERR:", data)
                 finally:
                     players += data
-
         return players
     
     def get_matches(self,
@@ -111,9 +111,9 @@ class U_GG_API(object):
         Beware: Deletes the outpath if it already exists!
         """
         match_ids = set()
-        matches_req_body = lambda summoner_name: {
+        matches_req_body = lambda riot_user_name, riot_tag_line: {
             "operationName": "FetchMatchSummaries",
-            "query": "query FetchMatchSummaries($championId: [Int], $page: Int, $queueType: [Int], $regionId: String!, $role: [Int], $seasonIds: [Int]!, $summonerName: String!) {   fetchPlayerMatchSummaries(     championId: $championId     page: $page     queueType: $queueType     regionId: $regionId     role: $role     seasonIds: $seasonIds     summonerName: $summonerName   ) {     finishedMatchSummaries     totalNumMatches     matchSummaries {       assists       championId       cs       damage       deaths       gold       items       jungleCs       killParticipation       kills       level       matchCreationTime       matchDuration       matchId       maximumKillStreak       primaryStyle       queueType       regionId       role       runes       subStyle       summonerName       summonerSpells       psHardCarry       psTeamPlay       lpInfo {         lp         placement         promoProgress         promoTarget         promotedTo {           tier           rank           __typename         }         __typename       }       teamA {         championId         summonerName         teamId         role         hardCarry         teamplay         __typename       }       teamB {         championId         summonerName         teamId         role         hardCarry         teamplay         __typename       }       version       visionScore       win       __typename     }     __typename   } }",
+            "query": "query FetchMatchSummaries($championId: [Int], $page: Int, $queueType: [Int], $regionId: String!, $role: [Int], $seasonIds: [Int]!, $riotUserName: String!, $riotTagLine: String!) {   fetchPlayerMatchSummaries(     championId: $championId     page: $page     queueType: $queueType     regionId: $regionId     role: $role     seasonIds: $seasonIds    riotUserName: $riotUserName    riotTagLine: $riotTagLine  ) {     finishedMatchSummaries     totalNumMatches     matchSummaries {       assists       championId       cs       damage       deaths       gold       items       jungleCs       killParticipation       kills       level       matchCreationTime       matchDuration       matchId       maximumKillStreak       primaryStyle       queueType       regionId       role       runes       subStyle       summonerName      riotUserName      riotTagLine       summonerSpells       psHardCarry       psTeamPlay       lpInfo {         lp         placement         promoProgress         promoTarget         promotedTo {           tier           rank           __typename         }         __typename       }       teamA {         championId         summonerName      riotUserName      riotTagLine         teamId         role         hardCarry         teamplay         __typename       }       teamB {         championId         summonerName      riotUserName      riotTagLine         teamId         role         hardCarry         teamplay         __typename       }       version       visionScore       win       __typename     }     __typename   } }",
             "variables": {
                 "championId": [self.champ_ids[c] for c in champs],
                 "page": 1, # Finds max of 20 games of a single champ per patch (people rarely play more than this so to keep the code much simpler, I'm only checking a maximum of 20 games of the same champion per summoner per patch.)
@@ -121,7 +121,8 @@ class U_GG_API(object):
                 "regionId": regionId,
                 "role": [],
                 "seasonIds": seasonIds,
-                "summonerName": summoner_name
+                "riotUserName": riot_user_name,
+                "riotTagLine": riot_tag_line
             }
         }
         if outpath:
@@ -135,7 +136,7 @@ class U_GG_API(object):
             future_to_match_id = (executor.submit(
                 self.handle_req,
                 self.base_url,
-                matches_req_body(name),
+                matches_req_body(name[0], name[1]),
                 delay
             ) for name in summoner_names)
             for future in concurrent.futures.as_completed(future_to_match_id):
@@ -146,7 +147,7 @@ class U_GG_API(object):
                 except Exception as exc:
                     data = None
                 finally:
-                    # print("data:", data)
+                    print("data:", data)
                     if data == None:
                         pass
                     else:

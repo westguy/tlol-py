@@ -67,8 +67,8 @@ class ReplayDownloader(object):
         app_port = self.app_port
 
         # NOTE: TEMP HARDFIX
-        auth_token = "cmlvdDpFalVRTzIxZVNRdTZ2Yy1KWkVNMzFn"
-        app_port = 65185
+        #auth_token = "C6clE2PJ-sktntBous3n3Q"
+        #app_port = 53925
 
         url = \
             f"https://127.0.0.1:{app_port}/lol-replays/v1/rofls/{game_id}/download/graceful"
